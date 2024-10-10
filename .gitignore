@@ -6,6 +6,12 @@ __pycache__/
 # C extensions
 *.so
 
+# Рidden file created by Mac OS
+.DS_Store
+
+# Byte-compiled
+__pycache__
+
 # Distribution / packaging
 .Python
 build/

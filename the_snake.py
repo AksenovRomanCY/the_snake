@@ -39,8 +39,54 @@ pygame.display.set_caption('Змейка')
 clock = pygame.time.Clock()
 
 
-# Тут опишите все классы игры.
-...
+class GameObject:
+    """ Родительский класс для всех будуюших игровых классов
+    (таких как 'Snake' и 'Apple')
+
+    """
+
+    def __init__(self):
+        """ Иницилизация атрибутов родительского класса
+
+        """
+        self.position = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+        self.body_color = None
+
+    def draw(self) -> None:
+        """ Абстрактный метод, который предназначен
+        для переопределения в дочерних классах
+
+        """
+        pass
+
+
+class Apple(GameObject):
+
+    def __init__(self):
+        """ Иницилизация атрибутов данного класса
+
+        """
+        super().__init__()
+        self.position = self.randomize_position()
+        self.body_color = APPLE_COLOR
+
+    @staticmethod
+    def randomize_position() -> tuple[int, int]:
+        """ Eстанавливает случайное положение яблока
+        на игровом поле
+
+        """
+        x_coordinate = randint(1, GRID_WIDTH)
+        y_coordinate = randint(1, GRID_HEIGHT)
+        return x_coordinate * GRID_SIZE, y_coordinate * GRID_SIZE
+
+    def draw(self) -> None:
+        """Отрисовывает яблоко на игровой поверхности
+
+        """
+        rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
+        pygame.draw.rect(screen, self.body_color, rect)
+        pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
 
 def main():
@@ -52,19 +98,12 @@ def main():
     # while True:
     #     clock.tick(SPEED)
 
-        # Тут опишите основную логику игры.
-        # ...
+    # Тут опишите основную логику игры.
+    # ...
 
 
 if __name__ == '__main__':
     main()
-
-
-# Метод draw класса Apple
-# def draw(self):
-#     rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
-#     pygame.draw.rect(screen, self.body_color, rect)
-#     pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
 # # Метод draw класса Snake
 # def draw(self):
