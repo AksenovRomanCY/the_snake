@@ -1,4 +1,5 @@
 from random import choice, randint
+from typing import Tuple
 
 import pygame
 
@@ -52,7 +53,7 @@ class GameObject:
         2. body_color - цвет объекта
 
         """
-        self.position = (GRID_WIDTH / 2, GRID_HEIGHT / 2)
+        self.position = (GRID_WIDTH // 2, GRID_HEIGHT // 2)
         self.body_color = None
 
     def draw(self) -> None:
@@ -77,21 +78,23 @@ class Apple(GameObject):
 
         """
         super().__init__()
-        self.position = self.randomize_position()
+        self.position = self.randomize_position([self.position])
         self.body_color = APPLE_COLOR
 
     @staticmethod
-    def randomize_position() -> tuple[int, int]:
+    def randomize_position(snake_positions: list[tuple[int, int]]) -> tuple[int, int]:
         """ Устанавливает случайное положение яблока
         на игровом поле
 
         """
-        x_coordinate = randint(1, GRID_WIDTH)
-        y_coordinate = randint(1, GRID_HEIGHT)
-        return x_coordinate * GRID_SIZE, y_coordinate * GRID_SIZE
+        while True:
+            x_coordinate = randint(1, GRID_WIDTH)
+            y_coordinate = randint(1, GRID_HEIGHT)
+            if all(x_coordinate != part[0] or y_coordinate != part[1] for part in snake_positions):
+                return x_coordinate * GRID_SIZE, y_coordinate * GRID_SIZE
 
     def draw(self) -> None:
-        """Отрисовывает яблоко на игровой поверхности
+        """ Отрисовывает яблоко на игровой поверхности
 
         """
         rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
@@ -123,6 +126,7 @@ class Snake(GameObject):
         self.direction = RIGHT
         self.next_direction = None
         self.body_color = SNAKE_COLOR
+        self.last = None
 
     def update_direction(self) -> None:
         """ Обновляет направление движения змейки
@@ -133,7 +137,27 @@ class Snake(GameObject):
             self.next_direction = None
 
     def move(self) -> None:
-        pass
+        """ Обновляет позицию змейки, добавляя новую
+        голову в начало списка positions и удаляя последний элемент, если
+        длина змейки не увеличилась.
+
+        """
+        if self.direction == UP:
+            new_head_position = (self.get_head_position[0], self.get_head_position[1] - 20)
+            self.positions.insert(0, new_head_position)
+        elif self.direction == DOWN:
+            new_head_position = (self.get_head_position[0], self.get_head_position[1] + 20)
+            self.positions.insert(0, new_head_position)
+        elif self.direction == LEFT:
+            new_head_position = (self.get_head_position[0] - 20, self.get_head_position[1])
+            self.positions.insert(0, new_head_position)
+        elif self.direction == LEFT:
+            new_head_position = (self.get_head_position[0] + 20, self.get_head_position[1])
+            self.positions.insert(0, new_head_position)
+
+        if len(self.positions) > self.length:
+            self.last = self.positions[-1]
+            self.positions.pop(-1)
 
     def draw(self) -> None:
         """ Отрисовывает змейку на экране, затирая след
@@ -154,15 +178,26 @@ class Snake(GameObject):
             last_rect = pygame.Rect(self.last, (GRID_SIZE, GRID_SIZE))
             pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
 
-    def get_head_position(self) -> None:
-        pass
+    @property
+    def get_head_position(self) -> tuple[int, int]:
+        """ Возвращает позицию головы змейки (первый элемент в списке positions)
+
+        """
+        return self.positions[0]
 
     def reset(self) -> None:
-        pass
+        """ Cбрасывает змейку в начальное состояние
+
+        """
+        self.positions = [self.position]
+        self.length = 1
+        self.direction = RIGHT
+        self.next_direction = None
+        self.last = None
 
 
 def handle_keys(game_object: Snake) -> None:
-    """Обрабатывает нажатия клавиш, чтобы изменить направление
+    """ Обрабатывает нажатия клавиш, чтобы изменить направление
     движения змейки
 
     """
@@ -181,7 +216,7 @@ def handle_keys(game_object: Snake) -> None:
                 game_object.next_direction = RIGHT
 
 
-def main():
+def main() -> None:
     # Инициализация PyGame:
     pygame.init()
     # Тут нужно создать экземпляры классов.
