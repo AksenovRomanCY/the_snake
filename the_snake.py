@@ -2,85 +2,85 @@ from random import randint
 
 import pygame
 
-# Константы для размеров поля и сетки:
+# Constants for field and grid sizes:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 20
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 
-# Направления движения:
+# Driving directions:
 UP = (0, -1)
 DOWN = (0, 1)
 LEFT = (-1, 0)
 RIGHT = (1, 0)
 
-# Цвет фона - черный:
+# The background color is black:
 BOARD_BACKGROUND_COLOR = (0, 0, 0)
 
-# Цвет границы ячейки
+# Cell border color
 BORDER_COLOR = (93, 216, 228)
 
-# Цвет яблока
+# The color of an apple
 APPLE_COLOR = (255, 0, 0)
 
-# Цвет змейки
+# The color of the snake
 SNAKE_COLOR = (0, 255, 0)
 
-# Цвет гнилого яблока
+# The color of a rotten apple
 ROTTEN_APPLE_COLOR = (128, 128, 0)
 
-# Цвет камня
+# The color of the stone
 ROCK_COLOR = (169, 169, 169)
 
-# Скорость движения змейки:
+# The speed of the snake:
 SPEED = 10
 
-# Настройка игрового окна:
+# Customize the game window:
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 
-# Заголовок окна игрового поля:
-pygame.display.set_caption('Змейка')
+# Title of the playing field window:
+pygame.display.set_caption('The Snake')
 
-# Настройка времени:
+# Setting the time:
 clock = pygame.time.Clock()
 
 
 class GameObject:
-    """Родительский класс для всех игровых классов
-    (таких, как 'Snake' и 'GameObjectThings')
+    """Parent class for all game classes
+    (such as 'Snake' and 'GameObjectThings')
 
     """
 
     def __init__(self):
-        """Иницилизация атрибутов родительского класса
-        1. position - отвечает за позицию на игровом экране
-           (в данном случе центр экрана)
-        2. body_color - цвет объекта
+        """Initialization of parent class attributes
+        1. position - responsible for the position on the game screen
+           (in this case the center of the screen)
+        2. body_color - color of the object
 
         """
         self.position = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         self.body_color = None
 
     def draw(self) -> None:
-        """Абстрактный метод, который предназначен
-        для переопределения в дочерних классах
+        """An abstract method that is intended
+        to be overridden in child classes
 
         """
         pass
 
 
 class GameObjectThings(GameObject):
-    """Родительский класс для всех предметных классов
-    (таких, как 'Apple', 'RottenApple' и 'Rock')
+    """A parent class for all subject classes
+    (such as 'Apple', 'RottenApple' and 'Rock')
 
     """
 
     def __init__(self):
-        """Иницилизация атрибутов родительского класса"""
+        """Initialization of parent class attributes"""
         super().__init__()
 
     def draw(self) -> None:
-        """Отрисовывает предмет на игровой поверхности"""
+        """Draws an object on the playing surface"""
         rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, rect)
         pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
@@ -89,24 +89,25 @@ class GameObjectThings(GameObject):
     def randomize_position(first_position: tuple[int, int],
                            second_position: tuple[int, int],
                            third_position: tuple[int, int]):
-        """Статический метод, который предназначен
-        для переопределения в дочерних классах
+        """A static method that is intended
+        to be overridden in child classes
 
         """
         pass
 
 
 class Apple(GameObjectThings):
-    """Класс отвечающий за объект яблока,
-    в частности за его позицию и отрисовку на игровом поле
+    """The class responsible for the apple object,
+    in particular for its position and drawing on the
+    playing field
 
     """
 
     def __init__(self):
-        """Иницилизация атрибутов данного класса
-        1. position - отвечает за позицию на игровом экране
-           (вызывает статическиую функцию randomize_position)
-        2. body_color - цвет объекта
+        """Initialization of attributes of this class
+        1. position - responsible for the position on the game screen
+           (calls static function randomize_position)
+        2. body_color - color of the object
 
         """
         super().__init__()
@@ -118,23 +119,25 @@ class Apple(GameObjectThings):
                            rotten_apple_position: tuple[int, int] = None,
                            rock_position: tuple[int, int] = None
                            ) -> tuple[int, int]:
-        """Устанавливает случайное положение яблока
-        на игровом поле
+        """Sets the random position of the apple
+        on the playing field
 
         """
         while True:
             x_coordinate = randint(0, GRID_WIDTH - 1) * GRID_SIZE
             y_coordinate = randint(0, GRID_HEIGHT - 1) * GRID_SIZE
 
-            # Создаёт генератор который каждую свою итерацию проверяют
-            # координаты змеи на координаты яблока.
-            # all() проверяет что все элементы списка были True
+            # Creates a generator that every iteration of the generator checks
+            # the coordinates of the snake against the coordinates of the
+            # apple.
+            # all() checks that all items in the list are True
             is_snake_position = all(
                 x_coordinate != part[0] and y_coordinate != part[1]
                 for part in snake_positions)
 
             if rotten_apple_position:
-                # Проверяют координаты гнилого на координаты обычного яблока.
+                # Check the coordinates of a rotten apple against the
+                # coordinates of a normal apple.
                 is_rotten_apple_position = (
                     x_coordinate != rotten_apple_position[0]
                     and y_coordinate != rotten_apple_position[1])
@@ -142,37 +145,38 @@ class Apple(GameObjectThings):
                 is_rotten_apple_position = True
 
             if rock_position:
-                # Проверяют координаты камня на координаты яблока.
+                # Check the coordinates of the stone against the coordinates
+                # of the apple.
                 is_rock_position = (
                     x_coordinate != rock_position[0]
                     and y_coordinate != rock_position[1])
             else:
                 is_rock_position = True
 
-            # Проверяем, что координаты не совпадают с позицией змеи,
-            # гнилого яблока и камня
+            # Checking that the coordinates don't match the snake's position
+            # the rotten apple and the rock
             if (is_snake_position and is_rotten_apple_position
                     and is_rock_position):
                 return x_coordinate, y_coordinate
 
 
 class Snake(GameObject):
-    """Класс отвечающий за объект змеи,
-    в частности за его изменением, передвижением,
-    отрисовкой и сбросом
+    """The class responsible for the snake object,
+    specifically, changing it, moving it,
+    rendering and resetting
 
     """
 
     def __init__(self):
-        """Иницилизация атрибутов данного класса
-        1. position - отвечает за позицию на игровом экране
-           (наследует из родительского класса и упаковывает в список)
-        2. length - длина змейки (Изначальное значение 1)
-        3. direction - направление движения змейки (Изначальное значение RIGHT)
-        4. next_direction — следующее направление движения, которое
-           будет применено
-           после обработки нажатия клавиши
-        5. body_color - цвет объекта
+        """Initialization of attributes of this class
+        1. position - responsible for the position on the game screen
+           (inherits from the parent class and packs it into a list)
+        2. length - length of the snake (Initial value 1)
+        3. direction - direction of snake movement (Initial value is RIGHT)
+        4. next_direction - the next direction of movement that
+           will be applied
+           after the key press is processed
+        5. body_color - object color
 
         """
         super().__init__()
@@ -183,19 +187,20 @@ class Snake(GameObject):
         self.body_color = SNAKE_COLOR
 
     def update_direction(self) -> None:
-        """Обновляет направление движения змейки"""
+        """Updates the direction of the snake's movement"""
         if self.next_direction:
             self.direction = self.next_direction
             self.next_direction = None
 
     def move(self) -> None:
-        """Обновляет позицию змейки, добавляя новую
-        голову в начало списка positions и удаляя последний элемент, если
-        длина змейки не увеличилась.
+        """Updates the snake's position by adding a new
+        head to the beginning of the positions list and deleting
+        the last element if the snake's length has not increased.
+        the length of the snake has not increased.
 
         """
         if self.direction == UP:
-            # Проверяет столкнулась ли змея с верхним барьером
+            # Checks to see if the snake has collided with the upper barrier
             if self.get_head_position[1] <= 0:
                 new_head_position = (self.get_head_position[0], 460)
             else:
@@ -203,7 +208,7 @@ class Snake(GameObject):
                                      self.get_head_position[1] - 20)
             self.positions.insert(0, new_head_position)
         elif self.direction == DOWN:
-            # Проверяет столкнулась ли змея с нижним барьером
+            # Checks to see if the snake has encountered the lower barrier
             if self.get_head_position[1] >= 460:
                 new_head_position = (self.get_head_position[0], 0)
             else:
@@ -211,7 +216,7 @@ class Snake(GameObject):
                                      self.get_head_position[1] + 20)
             self.positions.insert(0, new_head_position)
         elif self.direction == LEFT:
-            # Проверяет столкнулась ли змея с левым барьером
+            # Checks to see if the snake has collided with the left barrier
             if self.get_head_position[0] <= 0:
                 new_head_position = (620, self.get_head_position[1])
             else:
@@ -219,7 +224,7 @@ class Snake(GameObject):
                                      self.get_head_position[1])
             self.positions.insert(0, new_head_position)
         elif self.direction == RIGHT:
-            # Проверяет столкнулась ли змея с правым барьером
+            # Checks to see if the snake has collided with the right barrier
             if self.get_head_position[0] >= 620:
                 new_head_position = (0, self.get_head_position[1])
             else:
@@ -227,27 +232,27 @@ class Snake(GameObject):
                                      self.get_head_position[1])
             self.positions.insert(0, new_head_position)
 
-        # Удаляет последние значение из списка координат змеи пока они
-        # не будут соответствовать длине змеи
+        # Removes the last value from the snake coordinate list until it
+        # match the length of the snake
         while len(self.positions) > self.length:
-            del self.positions[-1]  # Удаляет 'хвост' змеи
+            del self.positions[-1]
 
     def draw(self) -> None:
-        """Отрисовывает змейку на экране"""
+        """Draws the snake on the screen"""
         for position in self.positions[1:]:
             rect = (pygame.Rect(position, (GRID_SIZE, GRID_SIZE)))
             pygame.draw.rect(screen, self.body_color, rect)
             pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
-        # Отрисовка головы змейки
+        # Sketching a snake's head
         head_rect = pygame.Rect(self.get_head_position, (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, head_rect)
         pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
     @property
     def get_head_position(self) -> tuple[int, int] | None:
-        """Возвращает позицию головы змейки
-        (первый элемент в списке positions)
+        """Returns the position of the snake's head
+        (the first element in the positions list)
 
         """
         try:
@@ -256,7 +261,7 @@ class Snake(GameObject):
             return None
 
     def reset(self) -> None:
-        """Cбрасывает змейку в начальное состояние"""
+        """Resets the snake to its initial state"""
         self.positions = [self.position]
         self.length = 1
         self.direction = RIGHT
@@ -264,16 +269,16 @@ class Snake(GameObject):
 
 
 class RottenApple(GameObjectThings):
-    """Класс отвечающий за объект гнилого яблока,
-    в частности за его позицию и отрисовку на игровом поле
-    (наследует большую часть функций и атрибутов от
-    родительского класса)
+    """The class responsible for the rotten apple object,
+    in particular for its position and rendering on the game board
+    (inherits most of the functions and attributes from the
+    parent class)
 
     """
 
     def __init__(self, apple_position: tuple[int, int]):
-        """Иницилизация атрибутов данного класса
-        1. body_color - цвет объекта
+        """Initialization of attributes of this class
+        1. body_color - object color
 
         """
         super().__init__()
@@ -286,52 +291,55 @@ class RottenApple(GameObjectThings):
                            apple_position: tuple[int, int],
                            rock_position: tuple[int, int] = None
                            ) -> tuple[int, int]:
-        """Устанавливает случайное положение яблока
-        на игровом поле
+        """Sets the random position of the rotten apple
+        on the playing field
 
         """
         while True:
             x_coordinate = randint(0, GRID_WIDTH - 1) * GRID_SIZE
             y_coordinate = randint(0, GRID_HEIGHT - 1) * GRID_SIZE
 
-            # Создаёт генератор который каждую свою итерацию проверяют
-            # координаты змеи на координаты яблока.
-            # all() проверяет что все элементы списка были True
+            # Creates a generator that every iteration of the generator checks
+            # the coordinates of the snake against the coordinates
+            # of the apple.
+            # all() checks that all items in the list are True
             is_snake_position = all(
                 x_coordinate != part[0] and y_coordinate != part[1]
                 for part in snake_positions)
 
-            # Проверяют координаты гнилого на координаты обычного яблока.
+            # Check the coordinates of a rotten apple against the
+            # coordinates of a normal apple.
             is_apple_position = (
                 x_coordinate != apple_position[0]
                 and y_coordinate != apple_position[1])
 
             if rock_position:
-                # Проверяют координаты камня на координаты яблока.
+                # Check the coordinates of the stone against the
+                # coordinates of the apple.
                 is_rock_position = (
                     x_coordinate != rock_position[0]
                     and y_coordinate != rock_position[1])
             else:
                 is_rock_position = True
 
-            # Проверяем, что координаты не совпадают с позицией змеи,
-            # гнилого яблока и камня
+            # Checking that the coordinates don't match the
+            # snake's position the rotten apple and the rock
             if is_snake_position and is_apple_position and is_rock_position:
                 return x_coordinate, y_coordinate
 
 
 class Rock(GameObjectThings):
-    """Класс отвечающий за объект камня,
-    в частности за его позицию и отрисовку на игровом поле
-    (наследует большую часть функций и атрибутов от
-    родительского класса)
+    """The class responsible for the stone object,
+    in particular for its position and rendering on the playing field
+    (inherits most of the functions and attributes from the
+    parent class)
 
     """
 
     def __init__(self, apple_position: tuple[int, int],
                  rotten_apple_position: tuple[int, int]):
-        """Иницилизация атрибутов данного класса
-        1. body_color - цвет объекта
+        """Initialization of attributes of this class
+        1. body_color - object color
 
         """
         super().__init__()
@@ -344,41 +352,44 @@ class Rock(GameObjectThings):
                            apple_position: tuple[int, int],
                            rotten_apple_position: tuple[int, int]
                            ) -> tuple[int, int]:
-        """Устанавливает случайное положение яблока
-        на игровом поле
+        """Randomizes the position of the apple
+        on the playing field
 
         """
         while True:
             x_coordinate = randint(0, GRID_WIDTH - 1) * GRID_SIZE
             y_coordinate = randint(0, GRID_HEIGHT - 1) * GRID_SIZE
 
-            # Создаёт генератор который каждую свою итерацию проверяют
-            # координаты змеи на координаты яблока.
-            # all() проверяет что все элементы списка были True
+            # Creates a generator that every iteration of the generator checks
+            # the coordinates of the snake against the coordinates
+            # of the apple.
+            # all() checks that all items in the list are True
             is_snake_position = all(
                 x_coordinate != part[0] and y_coordinate != part[1]
                 for part in snake_positions)
 
-            # Проверяют координаты гнилого на координаты обычного яблока.
+            # Check the coordinates of a rotten apple against the
+            # coordinates of a normal apple.
             is_apple_position = (
                 x_coordinate != apple_position[0]
                 and y_coordinate != apple_position[1])
 
-            # Проверяют координаты камня на координаты яблока.
+            # Check the coordinates of the stone against the
+            # coordinates of the apple.
             is_rotten_apple_position = (
                 x_coordinate != rotten_apple_position[0]
                 and y_coordinate != rotten_apple_position[1])
 
-            # Проверяем, что координаты не совпадают с позицией змеи,
-            # гнилого яблока и камня
+            # Checking that the coordinates don't match the snake's position #
+            # the rotten apple and the rock
             if (is_snake_position and is_apple_position
                     and is_rotten_apple_position):
                 return x_coordinate, y_coordinate
 
 
 def handle_keys(game_object: Snake) -> None:
-    """Обрабатывает нажатия клавиш, чтобы изменить направление
-    движения змейки
+    """Processes keystrokes to change the direction
+    of the snake
 
     """
     for event in pygame.event.get():
@@ -398,31 +409,31 @@ def handle_keys(game_object: Snake) -> None:
 
 def game_interaction(snake: Snake, apple: Apple,
                      rotten_apple: RottenApple, rock: Rock) -> None:
-    """Обрабатывает все основные игровые взаимодействия,
-    такие как сброс змеи, перемещение объектов, увеличение
-    и уменьшение змеи
+    """Handles all basic game interactions,
+    such as dropping the snake, moving objects, zooming in
+    and zooming in and out of the snake
 
     """
-    # Проверка на сброс игры при столкновении змеи с собой,
-    # уменьшением до 0 и столкновением с камнем
+    # Checking for a game reset when the snake collides with itself #
+    # Reducing to 0 and colliding with a rock
     if (snake.get_head_position in snake.positions[1:]
             or snake.length < 1
             or snake.get_head_position == rock.position):
-        snake.reset()  # Сбрасываем состояние змейки
+        snake.reset()  # Reset the state of the snake
         apple.position = apple.randomize_position(
             snake.positions)
         rotten_apple.position = rotten_apple.randomize_position(
             snake.positions, apple.position)
         rock.position = rock.randomize_position(
             snake.positions, apple.position, rotten_apple.position)
-    # Проверка на столкновение головы змейки с яблоком,
-    # и при прохождении проверки увеличивает змею и перемещает яблоко
+    # Checks to see if the snake's head collides with the apple,
+    # and if passed, enlarges the snake and moves the apple
     elif snake.get_head_position == apple.position:
         snake.length += 1
         apple.position = apple.randomize_position(
             snake.positions, rotten_apple.position, rock.position)
-    # Проверка на столкновение головы змейки с гнилым яблоком,
-    # и при прохождении проверки уменьшает змею и перемещает гнилое яблоко
+    # Checks to see if the snake's head collides with a rotten apple,
+    # and if passed, shrinks the snake and moves the rotten apple
     elif snake.get_head_position == rotten_apple.position:
         snake.length -= 1
         rotten_apple.position = rotten_apple.randomize_position(
@@ -431,39 +442,39 @@ def game_interaction(snake: Snake, apple: Apple,
 
 def main() -> None:
     """Главная функция запускающая основной код игры"""
-    # Инициализация PyGame:
+    # PyGame initialization:
     pygame.init()
 
-    # Инициализация игровых классов:
+    # Initialization of game classes:
     apple = Apple()
     snake = Snake()
     rotten_apple = RottenApple(apple.position)
     rock = Rock(apple.position, rotten_apple.position)
 
     while True:
-        # Выставляет темп игры
+        # Paces the game
         clock.tick(SPEED)
 
-        # Обработка ввода с клавиатуры
+        # Processing keyboard input
         handle_keys(game_object=snake)
 
-        # Обновление направления и движение змейки
+        # Updating the direction and movement of the snake
         snake.update_direction()
         snake.move()
 
-        # Обрабатывает игровые взаимодействия
+        # Handles game interactions
         game_interaction(snake, apple, rotten_apple, rock)
 
-        # Очищает экран перед отрисовкой
+        # Clears the screen before drawing
         screen.fill(BOARD_BACKGROUND_COLOR)
 
-        # Отрисовка яблока и змейки
+        # Drawing an apple and a snake
         apple.draw()
         snake.draw()
         rotten_apple.draw()
         rock.draw()
 
-        # Обновление экрана
+        # Screen refresh
         pygame.display.update()
 
 
