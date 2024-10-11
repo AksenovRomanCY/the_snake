@@ -15,6 +15,17 @@
 ```pip3 install -r requirements.txt```
 
 
+## Launch(mac)
+1. Open terminal then switching to a directory
+```cd the_snake```
+
+2. Activating the virtual environment
+```source venv/bin/activate```
+
+3. Launch
+```python3 the_snake.py```
+
+
 ## Dependencies
 This program depends on the Python interpreter version 3.12 or higher
 
