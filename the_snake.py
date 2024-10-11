@@ -1,4 +1,5 @@
 from random import randint
+from typing import Union
 
 import pygame
 
@@ -250,7 +251,7 @@ class Snake(GameObject):
         pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
     @property
-    def get_head_position(self) -> tuple[int, int] | None:
+    def get_head_position(self) -> Union[tuple[int, int], None]:
         """Returns the position of the snake's head
         (the first element in the positions list)
 
