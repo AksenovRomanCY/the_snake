@@ -6,15 +6,16 @@ while avoiding collisions with itself, rotten apple, or rock.
 Classes and functionalities provided:
 - Constants for screen and grid dimensions, as well as game element colors.
 - GameObject: A base class for all game entities, providing common attributes.
-- GameObjectThings: A subclass of GameObject for drawable objects (like apples and rocks).
+- GameObjectThings: A subclass of GameObject for drawable objects
+  (like apples and rocks).
 - Apple: Represents the main item the snake consumes to grow.
 - RottenApple: A variant of Apple that may have negative effects if consumed.
 - Snake: Represents the player-controlled snake, with functionalities
   for movement, growth, and collision detection.
 - Rock: Represents a stationary obstacle on the game field.
 - handle_keys: Manages user input for controlling the snake's direction.
-- game_interaction: Handles the game's core mechanics, including object movement,
-  collisions, and resetting game state.
+- game_interaction: Handles the game's core mechanics, including
+  object movement, collisions, and resetting game state.
 
 To play the game:
 1. Use arrow keys to control the snake's movement.
@@ -82,7 +83,8 @@ clock = pg.time.Clock()
 class GameObject:
     """Parent class for all game classes."""
 
-    def __init__(self, position: tuple[int, int] = None, body_color: tuple[int, int, int] = None):
+    def __init__(self, position: tuple[int, int] = None,
+                 body_color: tuple[int, int, int] = None):
         """Initialization of parent class attributes.
 
         1. position - responsible for the position on the game screen
@@ -93,8 +95,9 @@ class GameObject:
         self.body_color = body_color or DEFAULT_COLOR
 
     def draw(self) -> None:
-        """An abstract method that is intended to be overridden in child classes."""
-        raise NotImplementedError("This method should be overridden in a child class")
+        """Method that is intended to be overridden in child classes."""
+        raise NotImplementedError(
+            "This method should be overridden in a child class")
 
 
 class GameObjectThings(GameObject):
@@ -106,15 +109,18 @@ class GameObjectThings(GameObject):
         pg.draw.rect(screen, self.body_color, rect)
         pg.draw.rect(screen, BORDER_COLOR, rect, 1)
 
-    def randomize_position(self, occupied_positions: set[tuple[int, int]] = None
-                           ) -> None:
+    def randomize_position(
+            self, occupied_positions: set[tuple[int, int]] = None) -> None:
         """Sets the random position of the object on the playing field."""
         while True:
+            # Generate random coordinates
             x_coordinate = randint(0, GRID_WIDTH - 1) * GRID_SIZE
             y_coordinate = randint(0, GRID_HEIGHT - 1) * GRID_SIZE
             coordinates = (x_coordinate, y_coordinate)
 
-            if coordinates not in occupied_positions or occupied_positions is None:
+            # Checks if the new coordinates are in the busy list
+            if (coordinates not in occupied_positions
+                    or occupied_positions is None):
                 self.position = coordinates
                 break
 
@@ -122,7 +128,8 @@ class GameObjectThings(GameObject):
 class Apple(GameObjectThings):
     """The class responsible for the apple object."""
 
-    def __init__(self, occupied_positions: set[tuple[int, int]] = SCREEN_CENTER,
+    def __init__(self,
+                 occupied_positions: set[tuple[int, int]] = SCREEN_CENTER,
                  body_color: tuple[int, int, int] = APPLE_COLOR):
         """Initialization of attributes of this class.
 
@@ -152,7 +159,6 @@ class Snake(GameObject):
         5. body_color - object color
         """
         super().__init__(body_color=body_color)
-        self.last = None
         self.next_direction = None
         self.direction = None
         self.length = None
@@ -166,9 +172,11 @@ class Snake(GameObject):
             self.next_direction = None
 
     def snake_is_growing(self) -> None:
+        """Increases length of the snake."""
         self.length += 1
 
     def snake_is_shrinking(self) -> None:
+        """Shrinking length of the snake."""
         self.length -= 1
 
     def move(self) -> None:
@@ -186,11 +194,12 @@ class Snake(GameObject):
         x_direction, y_direction = self.direction
 
         # Calculate the new head position
+        # Handle collision with x boundary and y boundary
         new_head_position = (
             (x_coordinate + x_direction * GRID_SIZE)
-            % (SCREEN_WIDTH + GRID_SIZE),  # Handle collision with x boundary
+            % (SCREEN_WIDTH + GRID_SIZE),
             (y_coordinate + y_direction * GRID_SIZE)
-            % (SCREEN_HEIGHT + GRID_SIZE))  # Handling a collision with a y boundary
+            % (SCREEN_HEIGHT + GRID_SIZE))
 
         # Add the new head position to the top of the list
         self.positions.insert(0, new_head_position)
@@ -222,7 +231,6 @@ class Snake(GameObject):
         self.length = 1
         self.direction = choice([UP, DOWN, LEFT, RIGHT])
         self.next_direction = None
-        self.last = self.positions[-1]
 
 
 class RottenApple(GameObjectThings):
@@ -254,9 +262,12 @@ def handle_keys(game_object: Snake) -> None:
             pg.quit()
             raise SystemExit("Quitting the game")
         elif event.type == pg.KEYDOWN:
-            new_direction = KEYS.get(event.key, None)  # Get a new direction or None
-            if new_direction and game_object.direction != new_direction[1]:  # Checking the old direction
-                game_object.next_direction = new_direction[0]  # Set a new direction
+            # Get a new direction or None
+            new_direction = KEYS.get(event.key, None)
+            # Checking the old direction
+            if new_direction and game_object.direction != new_direction[1]:
+                # Set a new direction
+                game_object.next_direction = new_direction[0]
 
 
 def game_interaction(snake: Snake, apple: Apple,
@@ -278,18 +289,19 @@ def game_interaction(snake: Snake, apple: Apple,
         rotten_apple.randomize_position(
             set(snake.positions).union({apple.position}))
         rock.randomize_position(
-            set(snake.positions).union({apple.position, rotten_apple.position}))
+            set(snake.positions).union(
+                {apple.position, rotten_apple.position}))
     # Checks to see if the snake's head collides with the apple,
     # and if passed, enlarges the snake and moves the apple
     elif snake.get_head_position() == apple.position:
-        snake.length += 1
+        snake.snake_is_growing()
         apple.randomize_position(
             set(snake.positions).union({rotten_apple.position, rock.position}))
     # Checks to see if the snake's head collides with a rotten apple,
     # and if passed, shrinks the snake and moves the rotten apple
     elif snake.get_head_position() == rotten_apple.position:
         if snake.length > 1:
-            snake.length -= 1
+            snake.snake_is_shrinking()
         rotten_apple.randomize_position(
             set(snake.positions).union({apple.position, rock.position}))
 
@@ -301,9 +313,13 @@ def main() -> None:
 
     # Initialization of game classes:
     snake = Snake()
-    apple = Apple(occupied_positions=set(snake.positions))
-    rotten_apple = RottenApple(occupied_positions=set(snake.positions).union({apple.position}))
-    rock = Rock(occupied_positions=set(snake.positions).union({apple.position, rotten_apple.position}))
+    apple = Apple(
+        occupied_positions=set(snake.positions))
+    rotten_apple = RottenApple(
+        occupied_positions=set(snake.positions).union({apple.position}))
+    rock = Rock(
+        occupied_positions=set(snake.positions).union(
+            {apple.position, rotten_apple.position}))
 
     while True:
         # Paces the game
