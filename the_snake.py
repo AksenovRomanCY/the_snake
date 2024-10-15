@@ -231,6 +231,7 @@ class Snake(GameObject):
 class Apple(GameObjectThings):
     """The class responsible for the apple object."""
 
+    # if occupied_positions default is a None test fails so SCREEN_CENTER
     def __init__(self,
                  occupied_positions: set[tuple[int, int]] = SCREEN_CENTER,
                  body_color: tuple[int, int, int] = APPLE_COLOR):
@@ -241,18 +242,18 @@ class Apple(GameObjectThings):
         2. body_color - color of the object
         """
         super().__init__(
-            position=self.randomize_position(occupied_positions),
             body_color=body_color)
+        self.randomize_position(occupied_positions)
 
 
 class RottenApple(GameObjectThings):
     """The class responsible for the rotten apple object."""
 
     def __init__(self, occupied_positions: set[tuple[int, int]] = None,
-                 body_color: tuple[int, int, int] = None):
+                 body_color: tuple[int, int, int] = ROTTEN_APPLE_COLOR):
         """Initialization of attributes of this class."""
         super().__init__(
-            body_color=body_color or ROTTEN_APPLE_COLOR)
+            body_color=body_color)
         self.randomize_position(occupied_positions)
 
 
@@ -260,10 +261,10 @@ class Rock(GameObjectThings):
     """The class responsible for the rock object."""
 
     def __init__(self, occupied_positions: set[tuple[int, int]] = None,
-                 body_color: tuple[int, int, int] = None):
+                 body_color: tuple[int, int, int] = ROCK_COLOR):
         """Initialization of attributes of this class."""
         super().__init__(
-            body_color=body_color or ROCK_COLOR)
+            body_color=body_color)
         self.randomize_position(occupied_positions)
 
 
