@@ -23,7 +23,6 @@ To play the game:
 3. Consume apples to grow the snake longer and score points.
 """
 from random import randint, choice
-from typing import Union
 
 import pygame as pg
 
@@ -217,9 +216,9 @@ class Snake(GameObject):
         return self.positions[0]
 
     @property
-    def body_positions(self) -> Union[set[tuple[int, int]], {}]:
+    def body_positions(self) -> set[tuple[int, int]]:
         """Returns the position of the snake's body."""
-        return self.positions[1:] if len(self.positions) > 1 else set()
+        return self.positions[1:] if len(self.positions) > 1 else {}
 
     def reset(self, position: tuple[int, int] = None) -> None:
         """Resets the snake to its initial state."""
