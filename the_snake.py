@@ -23,6 +23,7 @@ To play the game:
 3. Consume apples to grow the snake longer and score points.
 """
 from random import randint, choice
+from typing import Union
 
 import pygame as pg
 
@@ -124,22 +125,10 @@ class GameObjectThings(GameObject):
                 self.position = coordinates
                 break
 
-
-class Apple(GameObjectThings):
-    """The class responsible for the apple object."""
-
-    def __init__(self,
-                 occupied_positions: set[tuple[int, int]] = SCREEN_CENTER,
-                 body_color: tuple[int, int, int] = APPLE_COLOR):
-        """Initialization of attributes of this class.
-
-        1. position - responsible for the position on the game screen
-           (calls static function randomize_position)
-        2. body_color - color of the object
-        """
-        super().__init__(
-            position=self.randomize_position(occupied_positions),
-            body_color=body_color)
+    @property
+    def object_position(self):
+        """Returns the position of the object."""
+        return self.position
 
 
 class Snake(GameObject):
@@ -177,7 +166,8 @@ class Snake(GameObject):
 
     def snake_is_shrinking(self) -> None:
         """Shrinking length of the snake."""
-        self.length -= 1
+        if self.length > 1:
+            self.length -= 1
 
     def move(self) -> None:
         """Change the snake's position.
@@ -221,9 +211,15 @@ class Snake(GameObject):
         pg.draw.rect(screen, self.body_color, head_rect)
         pg.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
+    # Not property because it doesn't pass the autotests
     def get_head_position(self) -> tuple[int, int]:
         """Returns the position of the snake's head."""
         return self.positions[0]
+
+    @property
+    def body_positions(self) -> Union[set[tuple[int, int]], {}]:
+        """Returns the position of the snake's body."""
+        return self.positions[1:] if len(self.positions) > 1 else set()
 
     def reset(self, position: tuple[int, int] = None) -> None:
         """Resets the snake to its initial state."""
@@ -231,6 +227,23 @@ class Snake(GameObject):
         self.length = 1
         self.direction = choice([UP, DOWN, LEFT, RIGHT])
         self.next_direction = None
+
+
+class Apple(GameObjectThings):
+    """The class responsible for the apple object."""
+
+    def __init__(self,
+                 occupied_positions: set[tuple[int, int]] = SCREEN_CENTER,
+                 body_color: tuple[int, int, int] = APPLE_COLOR):
+        """Initialization of attributes of this class.
+
+        1. position - responsible for the position on the game screen
+           (calls static function randomize_position)
+        2. body_color - color of the object
+        """
+        super().__init__(
+            position=self.randomize_position(occupied_positions),
+            body_color=body_color)
 
 
 class RottenApple(GameObjectThings):
@@ -280,30 +293,61 @@ def game_interaction(snake: Snake, apple: Apple,
     """
     # Checking for a game reset when the snake collides with itself
     # and colliding with a rock
-    if (snake.get_head_position() in snake.positions[1:]
-            or snake.get_head_position() == rock.position):
-        screen.fill(BOARD_BACKGROUND_COLOR)
-        snake.reset()  # Reset the state of the snake
-        apple.randomize_position(
-            set(snake.positions))
-        rotten_apple.randomize_position(
-            set(snake.positions).union({apple.position}))
-        rock.randomize_position(
-            set(snake.positions).union(
-                {apple.position, rotten_apple.position}))
+    if (snake.get_head_position() in snake.body_positions
+            or snake.get_head_position() == rock.object_position):
+        # Reset the state of the snake
+        snake.reset()
+
+        # Creates a variable with all occupied positions
+        # And moves the apple
+        occupied_positions_pull = set().union(
+            {snake.get_head_position()})
+        apple.randomize_position(occupied_positions_pull)
+
+        # Add to pull new value of apple coordinates
+        # And moves the rotten apple
+        occupied_positions_pull.union(
+            {snake.get_head_position(),
+             apple.object_position})
+        rotten_apple.randomize_position(occupied_positions_pull)
+
+        # Add to pull new value of rotten_apple coordinates
+        # And moves the rock
+        occupied_positions_pull.union(
+            {snake.get_head_position(),
+             apple.object_position,
+             rotten_apple.object_position})
+        rock.randomize_position(occupied_positions_pull)
     # Checks to see if the snake's head collides with the apple,
     # and if passed, enlarges the snake and moves the apple
-    elif snake.get_head_position() == apple.position:
+    elif snake.get_head_position() == apple.object_position:
+        # Creates a variable with all occupied positions
+        occupied_positions_pull = set(snake.body_positions or {}).union(
+            {snake.get_head_position(),
+             apple.object_position,
+             rotten_apple.object_position,
+             rock.object_position})
+
+        # Increases the snake
         snake.snake_is_growing()
-        apple.randomize_position(
-            set(snake.positions).union({rotten_apple.position, rock.position}))
+
+        # Moves the apple
+        apple.randomize_position(occupied_positions_pull)
     # Checks to see if the snake's head collides with a rotten apple,
     # and if passed, shrinks the snake and moves the rotten apple
-    elif snake.get_head_position() == rotten_apple.position:
-        if snake.length > 1:
-            snake.snake_is_shrinking()
-        rotten_apple.randomize_position(
-            set(snake.positions).union({apple.position, rock.position}))
+    elif snake.get_head_position() == rotten_apple.object_position:
+        # Creates a variable with all occupied positions
+        occupied_positions_pull = set(snake.body_positions or {}).union(
+            {snake.get_head_position(),
+             apple.object_position,
+             rotten_apple.object_position,
+             rock.object_position})
+
+        # Shrinks the snake
+        snake.snake_is_shrinking()
+
+        # Moves the rotten apple
+        rotten_apple.randomize_position(occupied_positions_pull)
 
 
 def main() -> None:
@@ -313,13 +357,12 @@ def main() -> None:
 
     # Initialization of game classes:
     snake = Snake()
-    apple = Apple(
-        occupied_positions=set(snake.positions))
-    rotten_apple = RottenApple(
-        occupied_positions=set(snake.positions).union({apple.position}))
-    rock = Rock(
-        occupied_positions=set(snake.positions).union(
-            {apple.position, rotten_apple.position}))
+    apple = Apple(occupied_positions={snake.get_head_position()})
+    rotten_apple = RottenApple(occupied_positions={snake.get_head_position(),
+                                                   apple.object_position})
+    rock = Rock(occupied_positions={snake.get_head_position(),
+                                    apple.object_position,
+                                    rotten_apple.object_position})
 
     while True:
         # Paces the game
@@ -336,6 +379,10 @@ def main() -> None:
         game_interaction(snake, apple, rotten_apple, rock)
 
         # Clears the screen before drawing
+        # Tried to use the proposed precode to erase cells,
+        # but in places where the snake crawled formed a
+        # cell that overlapped the snake itself, apples, etc.
+        # In my opinion, this is just the closest option.
         screen.fill(BOARD_BACKGROUND_COLOR)
 
         # Drawing an apple and a snake
