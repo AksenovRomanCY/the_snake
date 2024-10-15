@@ -106,7 +106,7 @@ class GameObjectThings(GameObject):
         pg.draw.rect(screen, self.body_color, rect)
         pg.draw.rect(screen, BORDER_COLOR, rect, 1)
 
-    def randomize_position(self, occupied_positions: set[tuple[int, int]]
+    def randomize_position(self, occupied_positions: set[tuple[int, int]] = None
                            ) -> None:
         """Sets the random position of the object on the playing field."""
         while True:
@@ -114,15 +114,16 @@ class GameObjectThings(GameObject):
             y_coordinate = randint(0, GRID_HEIGHT - 1) * GRID_SIZE
             coordinates = (x_coordinate, y_coordinate)
 
-            if coordinates not in occupied_positions:
-                self.position = (x_coordinate, y_coordinate)
+            if coordinates not in occupied_positions or occupied_positions is None:
+                self.position = coordinates
                 break
 
 
 class Apple(GameObjectThings):
     """The class responsible for the apple object."""
 
-    def __init__(self, occupied_positions: set[tuple[int, int]], body_color: tuple[int, int, int] = None):
+    def __init__(self, occupied_positions: set[tuple[int, int]] = SCREEN_CENTER,
+                 body_color: tuple[int, int, int] = APPLE_COLOR):
         """Initialization of attributes of this class.
 
         1. position - responsible for the position on the game screen
@@ -131,14 +132,14 @@ class Apple(GameObjectThings):
         """
         super().__init__(
             position=self.randomize_position(occupied_positions),
-            body_color=body_color or APPLE_COLOR)
+            body_color=body_color)
 
 
 class Snake(GameObject):
     """The class responsible for the snake object."""
 
-    def __init__(self, position: tuple[int, int] = None,
-                 body_color: tuple[int, int, int] = None):
+    def __init__(self, position: tuple[int, int] = SCREEN_CENTER,
+                 body_color: tuple[int, int, int] = SNAKE_COLOR):
         """Initialization of attributes of this class.
 
         1. position - responsible for the position on the game screen
@@ -150,7 +151,7 @@ class Snake(GameObject):
            after the key press is processed
         5. body_color - object color
         """
-        super().__init__(body_color=body_color or SNAKE_COLOR)
+        super().__init__(body_color=body_color)
         self.last = None
         self.next_direction = None
         self.direction = None
@@ -179,7 +180,7 @@ class Snake(GameObject):
         the length of the snake has not increased.
         """
         # Get the coordinates of the current head position
-        x_coordinate, y_coordinate = self.head_position
+        x_coordinate, y_coordinate = self.get_head_position()
 
         # Get the changes in x and y based on the current direction
         x_direction, y_direction = self.direction
@@ -207,18 +208,17 @@ class Snake(GameObject):
             pg.draw.rect(screen, BORDER_COLOR, rect, 1)
 
         # Sketching a snake's head
-        head_rect = pg.Rect(self.head_position, (GRID_SIZE, GRID_SIZE))
+        head_rect = pg.Rect(self.get_head_position(), (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, self.body_color, head_rect)
         pg.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
-    @property
-    def head_position(self) -> tuple[int, int]:
+    def get_head_position(self) -> tuple[int, int]:
         """Returns the position of the snake's head."""
         return self.positions[0]
 
     def reset(self, position: tuple[int, int] = None) -> None:
         """Resets the snake to its initial state."""
-        self.positions = [position or self.position]
+        self.positions = [position or SCREEN_CENTER]
         self.length = 1
         self.direction = choice([UP, DOWN, LEFT, RIGHT])
         self.next_direction = None
@@ -228,7 +228,7 @@ class Snake(GameObject):
 class RottenApple(GameObjectThings):
     """The class responsible for the rotten apple object."""
 
-    def __init__(self, occupied_positions: set[tuple[int, int]],
+    def __init__(self, occupied_positions: set[tuple[int, int]] = None,
                  body_color: tuple[int, int, int] = None):
         """Initialization of attributes of this class."""
         super().__init__(
@@ -239,7 +239,7 @@ class RottenApple(GameObjectThings):
 class Rock(GameObjectThings):
     """The class responsible for the rock object."""
 
-    def __init__(self, occupied_positions: set[tuple[int, int]],
+    def __init__(self, occupied_positions: set[tuple[int, int]] = None,
                  body_color: tuple[int, int, int] = None):
         """Initialization of attributes of this class."""
         super().__init__(
@@ -269,8 +269,8 @@ def game_interaction(snake: Snake, apple: Apple,
     """
     # Checking for a game reset when the snake collides with itself
     # and colliding with a rock
-    if (snake.head_position in snake.positions[1:]
-            or snake.head_position == rock.position):
+    if (snake.get_head_position() in snake.positions[1:]
+            or snake.get_head_position() == rock.position):
         screen.fill(BOARD_BACKGROUND_COLOR)
         snake.reset()  # Reset the state of the snake
         apple.randomize_position(
@@ -281,13 +281,13 @@ def game_interaction(snake: Snake, apple: Apple,
             set(snake.positions).union({apple.position, rotten_apple.position}))
     # Checks to see if the snake's head collides with the apple,
     # and if passed, enlarges the snake and moves the apple
-    elif snake.head_position == apple.position:
+    elif snake.get_head_position() == apple.position:
         snake.length += 1
         apple.randomize_position(
             set(snake.positions).union({rotten_apple.position, rock.position}))
     # Checks to see if the snake's head collides with a rotten apple,
     # and if passed, shrinks the snake and moves the rotten apple
-    elif snake.head_position == rotten_apple.position:
+    elif snake.get_head_position() == rotten_apple.position:
         if snake.length > 1:
             snake.length -= 1
         rotten_apple.randomize_position(
