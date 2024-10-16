@@ -74,7 +74,7 @@ SPEED = 10
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 
 # Title of the playing field window:
-pg.display.set_caption('The Snake')
+pg.display.set_caption("The Snake")
 
 # Setting the time:
 clock = pg.time.Clock()
@@ -153,17 +153,21 @@ class Snake(GameObject):
         self.positions = None
         self.reset(position=position)
 
+    def set_next_direction(self, direction: tuple[int, int]) -> None:
+        """Set the next direction of the snake's movement."""
+        self.next_direction = direction
+
     def update_direction(self) -> None:
         """Updates the direction of the snake's movement."""
         if self.next_direction:
             self.direction = self.next_direction
             self.next_direction = None
 
-    def snake_is_growing(self) -> None:
+    def is_grow(self) -> None:
         """Increases length of the snake."""
         self.length += 1
 
-    def snake_is_shrinking(self) -> None:
+    def is_shrink(self) -> None:
         """Shrinking length of the snake."""
         if self.length > 1:
             self.length -= 1
@@ -274,13 +278,13 @@ def handle_keys(game_object: Snake) -> None:
         if event.type == pg.QUIT:
             pg.quit()
             raise SystemExit("Quitting the game")
-        elif event.type == pg.KEYDOWN:
+        if event.type == pg.KEYDOWN:
             # Get a new direction or None
             new_direction = KEYS.get(event.key, None)
             # Checking the old direction
             if new_direction and game_object.direction != new_direction[1]:
                 # Set a new direction
-                game_object.next_direction = new_direction[0]
+                game_object.set_next_direction(new_direction[0])
 
 
 def game_interaction(snake: Snake, apple: Apple,
@@ -291,6 +295,13 @@ def game_interaction(snake: Snake, apple: Apple,
     dropping the snake, moving objects, zooming in
     and zooming in and out of the snake.
     """
+    # Creates a variable with all occupied positions
+    occupied_positions_pool = set(snake.body_positions or {}).union(
+        {snake.get_head_position(),
+         apple.object_position,
+         rotten_apple.object_position,
+         rock.object_position})
+
     # Checking for a game reset when the snake collides with itself
     # and colliding with a rock
     if (snake.get_head_position() in snake.body_positions
@@ -298,56 +309,39 @@ def game_interaction(snake: Snake, apple: Apple,
         # Reset the state of the snake
         snake.reset()
 
-        # Creates a variable with all occupied positions
+        # Reset a variable with all occupied positions
         # And moves the apple
-        occupied_positions_pull = set().union(
+        occupied_positions_pool = set().union(
             {snake.get_head_position()})
-        apple.randomize_position(occupied_positions_pull)
+        apple.randomize_position(occupied_positions_pool)
 
         # Add to pull new value of apple coordinates
         # And moves the rotten apple
-        occupied_positions_pull.union(
-            {snake.get_head_position(),
-             apple.object_position})
-        rotten_apple.randomize_position(occupied_positions_pull)
+        occupied_positions_pool.union(
+            {apple.object_position})
+        rotten_apple.randomize_position(occupied_positions_pool)
 
         # Add to pull new value of rotten_apple coordinates
         # And moves the rock
-        occupied_positions_pull.union(
-            {snake.get_head_position(),
-             apple.object_position,
-             rotten_apple.object_position})
-        rock.randomize_position(occupied_positions_pull)
+        occupied_positions_pool.union(
+            {rotten_apple.object_position})
+        rock.randomize_position(occupied_positions_pool)
     # Checks to see if the snake's head collides with the apple,
     # and if passed, enlarges the snake and moves the apple
     elif snake.get_head_position() == apple.object_position:
-        # Creates a variable with all occupied positions
-        occupied_positions_pull = set(snake.body_positions or {}).union(
-            {snake.get_head_position(),
-             apple.object_position,
-             rotten_apple.object_position,
-             rock.object_position})
-
         # Increases the snake
-        snake.snake_is_growing()
+        snake.is_grow()
 
         # Moves the apple
-        apple.randomize_position(occupied_positions_pull)
+        apple.randomize_position(occupied_positions_pool)
     # Checks to see if the snake's head collides with a rotten apple,
     # and if passed, shrinks the snake and moves the rotten apple
     elif snake.get_head_position() == rotten_apple.object_position:
-        # Creates a variable with all occupied positions
-        occupied_positions_pull = set(snake.body_positions or {}).union(
-            {snake.get_head_position(),
-             apple.object_position,
-             rotten_apple.object_position,
-             rock.object_position})
-
         # Shrinks the snake
-        snake.snake_is_shrinking()
+        snake.is_shrink()
 
         # Moves the rotten apple
-        rotten_apple.randomize_position(occupied_positions_pull)
+        rotten_apple.randomize_position(occupied_positions_pool)
 
 
 def main() -> None:
@@ -395,5 +389,5 @@ def main() -> None:
         pg.display.update()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
